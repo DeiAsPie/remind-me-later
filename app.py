@@ -11,9 +11,11 @@ api = Api(app)
 queue = []
 queue_lock = threading.Lock()
 
+
 def process_queue():
     while True:
         sleep(1)
+
 
 class AddItem(Resource):
     def post(self):
@@ -22,24 +24,39 @@ class AddItem(Resource):
         delay = data.get('delay')
         if not item or not isinstance(delay, int):
             return {'message': 'Invalid input'}, 400
-        available_at = time() + delay
         with queue_lock:
-            heapq.heappush(queue, (available_at, item))
+            heapq.heappush(queue, (delay, item))
+            print()
+            print(queue)
+            print()
         return {'message': 'Item added', 'item': item, 'delay': delay}, 200
+
 
 class GetItems(Resource):
     def get(self):
-        current_time = time()
+        time_to_compare_from = int(request.args.get('time'))
+        current_time = int(time())
+        print()
+        print(time_to_compare_from)
+        print(current_time)
+        print()
         available_items = []
         with queue_lock:
-            while queue and queue[0][0] <= current_time:
+            while queue and time_to_compare_from + queue[0][0] == current_time:
                 _, item = heapq.heappop(queue)
                 available_items.append(item)
+                break
+            if queue and time_to_compare_from + queue[0][0] < current_time:
+                return {'items': available_items, 'status': True}, 200
+            if not queue:
+                return {'items': available_items, 'status': False}, 200
         return {'items': available_items}, 200
+
 
 @app.route('/')
 def home():
    return render_template('index.html')
+
 
 api.add_resource(AddItem, '/api/add')
 api.add_resource(GetItems, '/api/items')
