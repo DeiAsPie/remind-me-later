@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delayed Queue</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label, input, button {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delayed Queue</h1>
+    <form id="queue-form">
+        <label for="item">Item:</label>
+        <input type="text" id="item" name="item" required>
+        <label for="delay">Delay (seconds):</label>
+        <input type="number" id="delay" name="delay" required>
+        <button type="submit">Run</button>
+    </form>
+    <h2>Available Items:</h2>
+    <ul id="items-list"></ul>
+    <script>
+        document.getElementById('queue-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const item = document.getElementById('item').value;
+            const delay = parseInt(document.getElementById('delay').value);
+
+            fetch('/api/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item: item, delay: delay })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.message === 'Item added') {
+                      alert('Item added successfully');
+                  } else {
+                      alert('Failed to add item');
+                  }
+              });
+
+            document.getElementById('item').value = '';
+            document.getElementById('delay').value = '';
+        });
+
+        function fetchAvailableItems() {
+            fetch('/api/items')
+                .then(response => response.json())
+                .then(data => {
+                    const itemsList = document.getElementById('items-list');
+                    // itemsList.innerHTML = '';
+                    data.items.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = item;
+                        itemsList.appendChild(listItem);
+                    });
+                });
+        }
+
+        setInterval(fetchAvailableItems, 1000);
+    </script>
+</body>
+</html>
