@@ -42,12 +42,10 @@ class GetItems(Resource):
         print()
         available_items = []
         with queue_lock:
-            while queue and time_to_compare_from + queue[0][0] == current_time:
+            while queue and time_to_compare_from + queue[0][0] <= current_time:
                 _, item = heapq.heappop(queue)
                 available_items.append(item)
                 break
-            if queue and time_to_compare_from + queue[0][0] < current_time:
-                return {'items': available_items, 'status': True}, 200
             if not queue:
                 return {'items': available_items, 'status': False}, 200
         return {'items': available_items}, 200
